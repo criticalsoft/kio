@@ -34,6 +34,7 @@
 #include <QDebug>
 #include <QMimeDatabase>
 #include <QRegularExpression>
+#include <QScrollBar>
 
 #include <kfileitemdelegate.h>
 #include <KLocalizedString>
@@ -84,6 +85,8 @@ public:
 
     static bool isReadable(const QUrl &url);
     bool isSchemeSupported(const QString &scheme) const;
+
+    QPoint progressBarPos() const;
 
     KFile::FileView allViews();
 
@@ -272,6 +275,11 @@ KDirOperator::Private::~Private()
 
     delete m_progressDelayTimer;
     m_progressDelayTimer = nullptr;
+}
+
+QPoint KDirOperator::Private::progressBarPos() const
+{
+    return QPoint(2, q->height() - progressBar->height() - 2);
 }
 
 KDirOperator::KDirOperator(const QUrl &_url, QWidget *parent) :
@@ -1352,8 +1360,6 @@ void KDirOperator::changeEvent(QEvent *event)
 
 bool KDirOperator::eventFilter(QObject *watched, QEvent *event)
 {
-    Q_UNUSED(watched);
-
     // If we are not hovering any items, check if there is a current index
     // set. In that case, we show the preview of that item.
     switch (event->type()) {
@@ -1517,6 +1523,22 @@ bool KDirOperator::eventFilter(QObject *watched, QEvent *event)
             }
         }
     }
+    break;
+    case QEvent::Resize: {
+        if (watched->objectName() == QLatin1String("d->itemview_viewport") && d->itemView->horizontalScrollBar()
+            && d->progressBar->parent() == this /* it could have been reparented to a statubar */) {
+            if (d->itemView->horizontalScrollBar()->isVisible()) {
+                // Show the progressBar above the horizontal scrollbar that may be visible
+                // in compact view
+                QPoint progressBarPos =  d->progressBarPos();
+                progressBarPos.ry() -= d->itemView->horizontalScrollBar()->height();
+                d->progressBar->move(progressBarPos);
+            } else {
+                d->progressBar->move(d->progressBarPos());
+            }
+        }
+    }
+    break;
     default:
         break;
     }
@@ -1715,6 +1737,7 @@ void KDirOperator::setView(QAbstractItemView *view)
     d->m_itemView->setModel(d->m_proxyModel);
     setFocusProxy(d->m_itemView);
 
+    d->itemView->viewport()->setObjectName(QStringLiteral("d->itemview_viewport"));
     view->viewport()->installEventFilter(this);
 
     KFileItemDelegate *delegate = new KFileItemDelegate(d->m_itemView);
