@@ -595,8 +595,6 @@ public:
 private:
     friend class KFileWidgetPrivate;
     std::unique_ptr<KFileWidgetPrivate> const d;
-
-    Q_PRIVATE_SLOT(d, void _k_slotLocationChanged(const QString &))
 };
 
 #endif

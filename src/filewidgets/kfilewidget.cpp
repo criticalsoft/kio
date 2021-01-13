@@ -163,7 +163,7 @@ public:
     bool toOverwrite(const QUrl &);
 
     // private slots
-    void _k_slotLocationChanged(const QString &);
+    void slotLocationChanged(const QString &);
     void urlEntered(const QUrl &);
     void enterUrl(const QUrl &);
     void enterUrl(const QString &);
@@ -533,7 +533,7 @@ KFileWidget::KFileWidget(const QUrl &_startDir, QWidget *parent)
     // item in this combo box). (ereslibre)
     d->m_locationEdit->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLength);
     connect(d->m_locationEdit, &KUrlComboBox::editTextChanged,
-            this, [this](const QString &text) { d->_k_slotLocationChanged(text); });
+            this, [this](const QString &text) { d->slotLocationChanged(text); });
 
     d->updateLocationWhatsThis();
     d->m_locationLabel->setBuddy(d->m_locationEdit);
@@ -1187,11 +1187,10 @@ void KFileWidgetPrivate::multiSelectionChanged()
 void KFileWidgetPrivate::setDummyHistoryEntry(const QString &text, const QIcon &icon,
         bool usePreviousPixmapIfNull)
 {
-    // setCurrentItem() will cause textChanged() being emitted,
-    // so _k_slotLocationChanged() will be called. Make sure we don't clear
-    // the KDirOperator's view-selection in there
-    QObject::disconnect(m_locationEdit, SIGNAL(editTextChanged(QString)),
-                        q, SLOT(_k_slotLocationChanged(QString)));
+    // Block m_locationEdit signals as setCurrentItem() will cause textChanged() to get
+    // emitted, so slotLocationChanged() will be called. Make sure we don't clear the
+    // KDirOperator's view-selection in there
+    const QSignalBlocker blocker(m_locationEdit);
 
     bool dummyExists = m_dummyAdded;
 
@@ -1228,9 +1227,6 @@ void KFileWidgetPrivate::setDummyHistoryEntry(const QString &text, const QIcon &
     }
 
     m_locationEdit->lineEdit()->setCursorPosition(cursorPosition);
-
-    QObject::connect(m_locationEdit, SIGNAL(editTextChanged(QString)),
-                     q, SLOT(_k_slotLocationChanged(QString)));
 }
 
 void KFileWidgetPrivate::removeDummyHistoryEntry()
@@ -1239,20 +1235,16 @@ void KFileWidgetPrivate::removeDummyHistoryEntry()
         return;
     }
 
-    // setCurrentItem() will cause textChanged() being emitted,
-    // so _k_slotLocationChanged() will be called. Make sure we don't clear
-    // the KDirOperator's view-selection in there
-    QObject::disconnect(m_locationEdit, SIGNAL(editTextChanged(QString)),
-                        q, SLOT(_k_slotLocationChanged(QString)));
+    // Block m_locationEdit signals as setCurrentItem() will cause textChanged() to get
+    // emitted, so slotLocationChanged() will be called. Make sure we don't clear the
+    // KDirOperator's view-selection in there
+    const QSignalBlocker blocker(m_locationEdit);
 
     if (m_locationEdit->count()) {
         m_locationEdit->removeItem(0);
     }
     m_locationEdit->setCurrentIndex(-1);
     m_dummyAdded = false;
-
-    QObject::connect(m_locationEdit, SIGNAL(editTextChanged(QString)),
-                     q, SLOT(_k_slotLocationChanged(QString)));
 }
 
 void KFileWidgetPrivate::setLocationText(const QUrl &url)
@@ -1652,7 +1644,7 @@ void KFileWidgetPrivate::fileCompletion(const QString &match)
     setDummyHistoryEntry(m_locationEdit->currentText(), mimeTypeIcon, !m_locationEdit->currentText().isEmpty());
 }
 
-void KFileWidgetPrivate::_k_slotLocationChanged(const QString &text)
+void KFileWidgetPrivate::slotLocationChanged(const QString &text)
 {
 //     qDebug();
 
@@ -1999,16 +1991,11 @@ void KFileWidgetPrivate::readRecentFiles()
 {
 //     qDebug();
 
-    QObject::disconnect(m_locationEdit, SIGNAL(editTextChanged(QString)),
-                        q, SLOT(_k_slotLocationChanged(QString)));
-
+    const bool oldState = m_locationEdit->blockSignals(true);
     m_locationEdit->setMaxItems(m_configGroup.readEntry(RecentFilesNumber, DefaultRecentURLsNumber));
-    m_locationEdit->setUrls(m_configGroup.readPathEntry(RecentFiles, QStringList()),
-                          KUrlComboBox::RemoveBottom);
+    m_locationEdit->setUrls(m_configGroup.readPathEntry(RecentFiles, QStringList()), KUrlComboBox::RemoveBottom);
     m_locationEdit->setCurrentIndex(-1);
-
-    QObject::connect(m_locationEdit, SIGNAL(editTextChanged(QString)),
-                     q, SLOT(_k_slotLocationChanged(QString)));
+    m_locationEdit->blockSignals(oldState);
 
     KUrlComboBox *combo = m_urlNavigator->editor();
     combo->setUrls(m_configGroup.readPathEntry(RecentURLs, QStringList()), KUrlComboBox::RemoveTop);
@@ -2020,7 +2007,6 @@ void KFileWidgetPrivate::readRecentFiles()
     if (completion) {
         completion->setDir(m_ops->url());
     }
-
 }
 
 void KFileWidgetPrivate::saveRecentFiles()
