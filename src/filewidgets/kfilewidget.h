@@ -19,6 +19,8 @@
 #include "kfile.h"
 #include <QWidget>
 
+#include <memory>
+
 class QUrl;
 class QPushButton;
 class KActionCollection;
@@ -592,7 +594,7 @@ public:
 
 private:
     friend class KFileWidgetPrivate;
-    KFileWidgetPrivate *const d;
+    std::unique_ptr<KFileWidgetPrivate> const d;
 
     Q_PRIVATE_SLOT(d, void _k_slotLocationChanged(const QString &))
 };

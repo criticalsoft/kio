@@ -633,8 +633,6 @@ KFileWidget::~KFileWidget()
 {
     KSharedConfig::Ptr config = KSharedConfig::openConfig();
     config->sync();
-
-    delete d;
 }
 
 void KFileWidget::setLocationLabel(const QString &text)
