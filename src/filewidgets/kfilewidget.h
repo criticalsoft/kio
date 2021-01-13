@@ -604,7 +604,6 @@ private:
     Q_PRIVATE_SLOT(d, void _k_fileSelected(const KFileItem &))
     Q_PRIVATE_SLOT(d, void _k_slotLoadingFinished())
     Q_PRIVATE_SLOT(d, void _k_fileCompletion(const QString &))
-    Q_PRIVATE_SLOT(d, void _k_toggleSpeedbar(bool))
     Q_PRIVATE_SLOT(d, void _k_toggleBookmarks(bool))
     Q_PRIVATE_SLOT(d, void _k_slotAutoSelectExtClicked())
     Q_PRIVATE_SLOT(d, void _k_placesViewSplitterMoved(int, int))
