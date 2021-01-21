@@ -47,14 +47,32 @@ bool KDirOperatorDetailView::setViewMode(KFile::FileView viewMode)
 
     if (KFile::isDetailView(viewMode)) {
         m_hideDetailColumns = false;
-        setAlternatingRowColors(true);
+
+
+
+
+        // MOD
+        setAlternatingRowColors(false);
+
+
+
+
     } else if (KFile::isTreeView(viewMode)) {
         m_hideDetailColumns = true;
         setAlternatingRowColors(false);
         tree = true;
     } else if (KFile::isDetailTreeView(viewMode)) {
         m_hideDetailColumns = false;
-        setAlternatingRowColors(true);
+
+
+
+
+        // MOD
+        setAlternatingRowColors(false);
+
+
+
+
         tree = true;
     } else {
         return false;
